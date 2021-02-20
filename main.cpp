@@ -62,8 +62,9 @@ int main(){
 	}
 	
 	bool done {false};
-    Function f {Function(0.05)};
+    Function f {Function(0.0005)};
     double start {0};
+    double offset_y {0};
 	while (!done) {
         SDL_Event event;
 
@@ -71,8 +72,12 @@ int main(){
         SDL_RenderClear(ren);
         
         SDL_SetRenderDrawColor(ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
-        for (double x {0}; x < WIDTH; x+=0.5*2) {
-            SDL_RenderDrawLine(ren, x, HEIGHT/2+f.next_sample()*75, x+0.5, HEIGHT/2+f.next_sample()*75);
+        
+        double prev = f.next_sample()*75;
+        for (double x {0}; x < WIDTH; x+=0.005*2) {
+            double next = f.next_sample()*75;
+            SDL_RenderDrawLine(ren, x, HEIGHT/2 - prev + offset_y, x+0.5, HEIGHT/2 - next + offset_y);
+            prev = next;
         }
         
         SDL_RenderPresent(ren);
@@ -85,6 +90,10 @@ int main(){
                     start+=0.5;
                 else if (event.key.keysym.sym == SDLK_LEFT)
                     start-=0.5;
+                else if (event.key.keysym.sym == SDLK_UP)
+                    offset_y-=3;
+                else if (event.key.keysym.sym == SDLK_DOWN)
+                    offset_y+=3;
             }
         }
         
