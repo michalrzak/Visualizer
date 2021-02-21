@@ -61,10 +61,16 @@ int main(){
 		return 1;
 	}
 	
-	bool done {false};
-    Function f {Function(0.0005)};
-    double start {0};
+	//mouse scrolling variables
+	bool mouse_left_down {false};
+	int initial_x;
+    int initial_y;
+    
+    Function f {Function(0.005)};
+    double offset_x {0};
     double offset_y {0};
+    
+    bool done {false};
 	while (!done) {
         SDL_Event event;
 
@@ -74,30 +80,53 @@ int main(){
         SDL_SetRenderDrawColor(ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
         
         double prev = f.next_sample()*75;
-        for (double x {0}; x < WIDTH; x+=0.005*2) {
+        for (double x {0}; x < WIDTH; x+=0.05*2) {
             double next = f.next_sample()*75;
             SDL_RenderDrawLine(ren, x, HEIGHT/2 - prev + offset_y, x+0.5, HEIGHT/2 - next + offset_y);
             prev = next;
         }
         
-        SDL_RenderPresent(ren);
+        
         while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
-                done = true;
-            }
-            if (event.type == SDL_KEYDOWN) {
-                if (event.key.keysym.sym == SDLK_RIGHT)
-                    start+=0.5;
-                else if (event.key.keysym.sym == SDLK_LEFT)
-                    start-=0.5;
-                else if (event.key.keysym.sym == SDLK_UP)
-                    offset_y-=3;
-                else if (event.key.keysym.sym == SDLK_DOWN)
-                    offset_y+=3;
+            switch (event.type) {
+                case SDL_QUIT:
+                    done = true;
+                    break;
+                    
+                case SDL_MOUSEBUTTONDOWN:
+                    if (event.button.button == SDL_BUTTON_LEFT) {
+                        mouse_left_down = true;
+                        initial_x = event.button.x;
+                        initial_y = event.button.y;
+                    }
+                    
+                    break;
+                
+                case SDL_MOUSEBUTTONUP:
+                    if (event.button.button == SDL_BUTTON_LEFT)
+                        mouse_left_down = false;
+                    break;
             }
         }
         
-        f.set_current_sample(start);
+        if (mouse_left_down) {
+            int current_x;
+            int current_y;
+            SDL_GetMouseState(&current_x, &current_y);
+            
+            SDL_RenderDrawLine(ren, current_x, current_y-10, current_x, current_y+10);
+            SDL_RenderDrawLine(ren, current_x-10, current_y, current_x+10, current_y);
+            
+            offset_x += (initial_x-current_x)/4.0;
+            offset_y -= (initial_y-current_y)*1.5;
+            
+            initial_x = current_x;
+            initial_y = current_y;
+        }
+        
+        SDL_RenderPresent(ren);
+        
+        f.set_current_sample(offset_x);
         //SDL_Delay(100);
     }
     
