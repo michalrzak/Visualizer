@@ -9,6 +9,10 @@
 #define WIDTH  640
 #define HEIGHT  480
 
+//Change these numbers to change the scrollspeed and direction
+#define X_SCROLLSPEED 1/4.0
+#define Y_SCROLLSPEED -1.5
+
 
 std::ostream& logSDLError(std::ostream &os, const std::string &msg){
 	return os << msg << " error: " << SDL_GetError() << '\n';
@@ -117,8 +121,8 @@ int main(){
             SDL_RenderDrawLine(ren, current_x, current_y-10, current_x, current_y+10);
             SDL_RenderDrawLine(ren, current_x-10, current_y, current_x+10, current_y);
             
-            offset_x += (initial_x-current_x)/4.0;
-            offset_y -= (initial_y-current_y)*1.5;
+            offset_x += (initial_x-current_x)*X_SCROLLSPEED;
+            offset_y += (initial_y-current_y)*Y_SCROLLSPEED;
             
             initial_x = current_x;
             initial_y = current_y;
