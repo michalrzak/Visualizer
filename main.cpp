@@ -13,6 +13,11 @@
 #define X_SCROLLSPEED 1/4.0
 #define Y_SCROLLSPEED -1.5
 
+//Change these to alter the graph
+#define SAMPLE_FREQUENCY 0.005
+#define X_AXIS_SCALE 20
+#define Y_AXIS_SCALE 75
+#define HIGHLIGHT_INTERPOLANTS false
 
 std::ostream& logSDLError(std::ostream &os, const std::string &msg){
 	return os << msg << " error: " << SDL_GetError() << '\n';
@@ -70,7 +75,7 @@ int main(){
 	int initial_x;
     int initial_y;
     
-    Function f {Function(0.005)};
+    Function f {Function(SAMPLE_FREQUENCY)};
     double offset_x {0};
     double offset_y {0};
     
@@ -82,12 +87,22 @@ int main(){
         SDL_RenderClear(ren);
         
         SDL_SetRenderDrawColor(ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
+        bool black {true};
         
-        double prev = f.next_sample()*75;
-        for (double x {0}; x < WIDTH; x+=0.05*2) {
-            double next = f.next_sample()*75;
-            SDL_RenderDrawLine(ren, x, HEIGHT/2 - prev + offset_y, x+0.5, HEIGHT/2 - next + offset_y);
+        double prev = f.next_sample()*Y_AXIS_SCALE;
+        for (double x {0}; x < WIDTH; x+=SAMPLE_FREQUENCY*X_AXIS_SCALE) {
+            double next = f.next_sample()*Y_AXIS_SCALE;
+            //The y coordinate has the default position in the middle of the screen
+            SDL_RenderDrawLine(ren, x, HEIGHT/2 + offset_y - prev , x+SAMPLE_FREQUENCY*X_AXIS_SCALE, HEIGHT/2 + offset_y - next);
             prev = next;
+            
+            if (HIGHLIGHT_INTERPOLANTS) {
+                if (black)
+                    SDL_SetRenderDrawColor(ren, 255, 0, 0, SDL_ALPHA_OPAQUE);
+                else
+                    SDL_SetRenderDrawColor(ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
+                black = !black;
+            }
         }
         
         
