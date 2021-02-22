@@ -11,8 +11,8 @@
 #define HEIGHT  480
 
 //Change these numbers to change the scrollspeed and direction
-#define X_SCROLLSPEED 1/4.0
-#define Y_SCROLLSPEED -1.5
+#define X_SCROLLSPEED 1.0/10
+#define Y_SCROLLSPEED -2.0
 
 //Change these number to change the zoom parameters
 #define ZOOMSPEED 1.5
@@ -166,6 +166,23 @@ int main(){
                             zoom = MIN_ZOOM;
                     }
                     
+                    //set offsets accordingly
+                    int current_x;
+                    int current_y;
+                    SDL_GetMouseState(&current_x, &current_y);
+                    
+                    //current_y -= HEIGHT/2;
+                    double x2 {current_x/ZOOMSPEED};
+                    double y2 {current_y/ZOOMSPEED};
+                    
+                    //offset_x -= (current_x-x2);
+                    //offset_y += (current_y-y2);
+
+                    std::cout << offset_x << ' ' << offset_y << '\n';
+                    std::cout << (current_x-x2) << ' ' << (current_y-y2) << '\n';
+
+                    
+                    
                     fade_crosshair = CROSSHAIR_FADE_DURATION;
                     break;
                     
@@ -184,8 +201,8 @@ int main(){
             
             initial_x = current_x;
             initial_y = current_y;
+            std::cout << offset_x << ' ' << offset_y << '\n';
         }
-        
         
         if (fade_crosshair) {
             SDL_SetRenderDrawColor(ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -194,11 +211,11 @@ int main(){
         }
         
         SDL_RenderPresent(ren);
-        
-        f.set_current_sample(offset_x);
+                                                                                                                                                                                                                                                           
+        f.set_current_sample(offset_x/zoom);
         //SDL_Delay(100);
     }
-    
+
     Util::cleanup(ren, win);
 
     
