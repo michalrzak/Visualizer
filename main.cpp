@@ -155,12 +155,13 @@ int main(){
                     
                 case SDL_MOUSEWHEEL:
                     
+                    //retrieve current mouse position to adjust offsets accordingly
+                    //offsets are calculated from the [0;0] coordinate in the graph. 
+                    //there may be a better way to do all this but this is functional
                     int current_x;
                     int current_y;
                     SDL_GetMouseState(&current_x, &current_y);
-                    
-                    std::cout << (current_x+offset_x)/X_AXIS_SCALE/zoom << ' ' << (-current_y+offset_y)/Y_AXIS_SCALE/zoom << '\n';
-                    
+                                        
                     double cx {static_cast<double>(current_x+offset_x)};
                     double cy {static_cast<double>(-current_y+offset_y)};
 
@@ -179,38 +180,9 @@ int main(){
                         offset_x += (cx/ZOOMSPEED-cx);
                         offset_y += (cy/ZOOMSPEED-cy);
                     }
-                    /*
-                    //set offsets accordingly
-                    
-                    double x2 {static_cast<double>(current_x)};
-                    double y2 {static_cast<double>(current_y)};
-                    
-                    //x2/=X_AXIS_SCALE;
-                    //y2/=Y_AXIS_SCALE;
-                    
-                    x2/=zoom;
-                    y2/=zoom;
-                    
-                    
-                    offset_x += (cx-x2);
-                    offset_y -= (cy-y2);
-
-                    std::cout << offset_x << ' ' << offset_y << '\n';
-                    std::cout << (current_x) << ' ' << (current_y) << '\n';
-                    std::cout << cx << ' ' << cy << '\n';
-                    std::cout << zoom << '\n';
-*/
-                    
-                    
-                    
-                    //std::cout << (cx-cx/ZOOMSPEED) << ' ' << (cy-cy/ZOOMSPEED) << '\n';
-                    
-                    
                     
                     fade_crosshair = CROSSHAIR_FADE_DURATION;
-                    
-                    std::cout << (current_x+offset_x)/X_AXIS_SCALE/zoom << ' ' << (-current_y+offset_y)/Y_AXIS_SCALE/zoom << '\n' << '\n';
-                    
+                                        
                     break;
                     
             }
@@ -228,8 +200,6 @@ int main(){
             
             initial_x = current_x;
             initial_y = current_y;
-            //std::cout << offset_x << ' ' << offset_y << '\n';
-            std::cout << (current_x+offset_x)/X_AXIS_SCALE/zoom << ' ' << (-current_y+offset_y)/Y_AXIS_SCALE/zoom << '\n';
         }
         
         if (fade_crosshair) {
@@ -246,12 +216,6 @@ int main(){
     }
 
     Util::cleanup(ren, win);
-
-    
-	/*for (size_t i{0}; i < 3; ++i) {
-		SDL_RenderPresent(ren);
-		SDL_Delay(1000);
-	}*/
 
 	SDL_Quit();
 	return 0;
