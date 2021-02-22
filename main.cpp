@@ -30,31 +30,6 @@ std::ostream& logSDLError(std::ostream &os, const std::string &msg){
 	return os << msg << " error: " << SDL_GetError() << '\n';
 } 
 
-SDL_Texture* loadTexture(const std::string &file, SDL_Renderer *ren){
-	SDL_Texture *texture {nullptr};
-	SDL_Surface *loaded_image {SDL_LoadBMP(file.c_str())};
-
-	if(!loaded_image){
-		logSDLError(std::cerr, "LoadBMP");
-		return texture;
-	}
-
-	texture = SDL_CreateTextureFromSurface(ren, loaded_image);
-	Util::cleanup(loaded_image);
-	if(!texture)
-		logSDLError(std::cerr, "CreateTextureFromSurface");
-
-	return texture;
-}
-
-void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y){
-	SDL_Rect dst;
-	dst.x = x;
-	dst.y = y;
-	
-	SDL_QueryTexture(tex, nullptr, nullptr, &dst.w, &dst.h);
-	SDL_RenderCopy(ren, tex, nullptr, &dst);
-}
 
 //This function creates a crosshair at the mouse position. It can also return the current mouse position.
 void crosshair_at_mousepointer(SDL_Renderer* ren, int* mouse_x = nullptr, int* mouse_y = nullptr) {
