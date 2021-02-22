@@ -6,6 +6,7 @@
 #include "cleanup.h"
 #include "Function.h"
 
+//Change these numbers to alter the window size
 #define WIDTH  640
 #define HEIGHT  480
 
@@ -17,6 +18,7 @@
 #define ZOOMSPEED 1.5
 #define MIN_ZOOM 0.001
 #define MAX_ZOOM 1000
+#define CROSSHAIR_FADE_DURATION 20u
 
 //Change these to alter the graph
 #define SAMPLE_FREQUENCY 0.005
@@ -54,6 +56,21 @@ void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y){
 	SDL_RenderCopy(ren, tex, nullptr, &dst);
 }
 
+//This function creates a crosshair at the mouse position. It can also return the current mouse position.
+void crosshair_at_mousepointer(SDL_Renderer* ren, int* mouse_x = nullptr, int* mouse_y = nullptr) {
+    int current_x;
+    int current_y;
+    SDL_GetMouseState(&current_x, &current_y);
+    
+    SDL_RenderDrawLine(ren, current_x, current_y-10, current_x, current_y+10);
+    SDL_RenderDrawLine(ren, current_x-10, current_y, current_x+10, current_y);
+    
+    if (mouse_x != nullptr)
+        *mouse_x = current_x;
+    if (mouse_y != nullptr)
+        *mouse_y = current_y;
+}
+
 int main(){
 	if(SDL_Init(SDL_INIT_EVERYTHING)){
 		logSDLError(std::cerr, "SDL_Init");
@@ -79,8 +96,12 @@ int main(){
 	bool mouse_left_down {false};
 	int initial_x;
     int initial_y;
-    double zoom {1};
     
+    //mouse zoom variables
+    double zoom {1};
+    unsigned int fade_crosshair {0};
+    
+    //Function variables
     Function f {Function(SAMPLE_FREQUENCY)};
     double offset_x {0};
     double offset_y {0};
@@ -144,26 +165,32 @@ int main(){
                         if (zoom < MIN_ZOOM)
                             zoom = MIN_ZOOM;
                     }
-                    if (!std::isfinite(zoom) || zoom == 0)
-                        zoom=1;
+                    
+                    fade_crosshair = CROSSHAIR_FADE_DURATION;
                     break;
                     
             }
         }
         
         if (mouse_left_down) {
+            SDL_SetRenderDrawColor(ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
+            
             int current_x;
             int current_y;
-            SDL_GetMouseState(&current_x, &current_y);
-            
-            SDL_RenderDrawLine(ren, current_x, current_y-10, current_x, current_y+10);
-            SDL_RenderDrawLine(ren, current_x-10, current_y, current_x+10, current_y);
+            crosshair_at_mousepointer(ren, &current_x, &current_y);
             
             offset_x += (initial_x-current_x)*X_SCROLLSPEED;
             offset_y += (initial_y-current_y)*Y_SCROLLSPEED;
             
             initial_x = current_x;
             initial_y = current_y;
+        }
+        
+        
+        if (fade_crosshair) {
+            SDL_SetRenderDrawColor(ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
+            crosshair_at_mousepointer(ren);
+            --fade_crosshair;
         }
         
         SDL_RenderPresent(ren);
