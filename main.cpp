@@ -11,7 +11,7 @@
 #define HEIGHT  480
 
 //Change these numbers to change the scrollspeed and direction
-#define X_SCROLLSPEED 1.0/10
+#define X_SCROLLSPEED 2.0
 #define Y_SCROLLSPEED -2.0
 
 //Change these number to change the zoom parameters
@@ -116,9 +116,9 @@ int main(){
         SDL_SetRenderDrawColor(ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
         bool black {true};
         
-        double prev = f.next_sample()*Y_AXIS_SCALE;
+        double prev = f.next_sample()*Y_AXIS_SCALE*zoom;
         for (double x {0}; x < WIDTH; x+=SAMPLE_FREQUENCY*X_AXIS_SCALE*zoom) {
-            double next = f.next_sample()*Y_AXIS_SCALE;
+            double next = f.next_sample()*Y_AXIS_SCALE*zoom;
             //The y coordinate has the default position in the middle of the screen
             SDL_RenderDrawLine(ren, x, /*HEIGHT/2 +*/ offset_y - prev , x+SAMPLE_FREQUENCY*X_AXIS_SCALE*zoom, /*HEIGHT/2 +*/ offset_y - next);
             prev = next;
@@ -159,35 +159,33 @@ int main(){
                     int current_y;
                     SDL_GetMouseState(&current_x, &current_y);
                     
-                    //current_y = HEIGHT/2 - current_y;
+                    std::cout << (current_x+offset_x)/X_AXIS_SCALE/zoom << ' ' << (-current_y+offset_y)/Y_AXIS_SCALE/zoom << '\n';
                     
-                    double cx {static_cast<double>(current_x)};
-                    double cy {static_cast<double>(current_y)};
-                    
-                    cx/=X_AXIS_SCALE;
-                    //cy/=Y_AXIS_SCALE;
-                    
-                    cx/=zoom;
-                    cy/=zoom;
-                    
+                    double cx {static_cast<double>(current_x+offset_x)};
+                    double cy {static_cast<double>(-current_y+offset_y)};
+
                     if (event.wheel.y > 0 && zoom != MAX_ZOOM) {
                         zoom*=ZOOMSPEED;
                         if (zoom > MAX_ZOOM)
                             zoom = MAX_ZOOM;
+                        offset_x += (cx*ZOOMSPEED-cx);
+                        offset_y += (cy*ZOOMSPEED-cy);
                     }
                     
                     if (event.wheel.y < 0 && zoom != MIN_ZOOM) {
                         zoom/=ZOOMSPEED;
                         if (zoom < MIN_ZOOM)
                             zoom = MIN_ZOOM;
+                        offset_x += (cx/ZOOMSPEED-cx);
+                        offset_y += (cy/ZOOMSPEED-cy);
                     }
-                    
+                    /*
                     //set offsets accordingly
                     
                     double x2 {static_cast<double>(current_x)};
                     double y2 {static_cast<double>(current_y)};
                     
-                    x2/=X_AXIS_SCALE;
+                    //x2/=X_AXIS_SCALE;
                     //y2/=Y_AXIS_SCALE;
                     
                     x2/=zoom;
@@ -195,15 +193,24 @@ int main(){
                     
                     
                     offset_x += (cx-x2);
-                    offset_y += (cy-y2);
+                    offset_y -= (cy-y2);
 
                     std::cout << offset_x << ' ' << offset_y << '\n';
                     std::cout << (current_x) << ' ' << (current_y) << '\n';
                     std::cout << cx << ' ' << cy << '\n';
-
+                    std::cout << zoom << '\n';
+*/
+                    
+                    
+                    
+                    //std::cout << (cx-cx/ZOOMSPEED) << ' ' << (cy-cy/ZOOMSPEED) << '\n';
+                    
                     
                     
                     fade_crosshair = CROSSHAIR_FADE_DURATION;
+                    
+                    std::cout << (current_x+offset_x)/X_AXIS_SCALE/zoom << ' ' << (-current_y+offset_y)/Y_AXIS_SCALE/zoom << '\n' << '\n';
+                    
                     break;
                     
             }
@@ -221,7 +228,8 @@ int main(){
             
             initial_x = current_x;
             initial_y = current_y;
-            std::cout << offset_x << ' ' << offset_y << '\n';
+            //std::cout << offset_x << ' ' << offset_y << '\n';
+            std::cout << (current_x+offset_x)/X_AXIS_SCALE/zoom << ' ' << (-current_y+offset_y)/Y_AXIS_SCALE/zoom << '\n';
         }
         
         if (fade_crosshair) {
@@ -230,9 +238,10 @@ int main(){
             --fade_crosshair;
         }
         
+        
         SDL_RenderPresent(ren);
                                                                                                                                                                                                                                                            
-        f.set_current_sample(offset_x/zoom);
+        f.set_current_sample(offset_x/X_AXIS_SCALE/zoom);
         //SDL_Delay(100);
     }
 
