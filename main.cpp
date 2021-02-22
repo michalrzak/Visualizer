@@ -13,11 +13,16 @@
 #define X_SCROLLSPEED 1/4.0
 #define Y_SCROLLSPEED -1.5
 
+//Change these number to change the zoom parameters
+#define ZOOMSPEED 1.5
+#define MIN_ZOOM 0.001
+#define MAX_ZOOM 1000
+
 //Change these to alter the graph
 #define SAMPLE_FREQUENCY 0.005
-#define X_AXIS_SCALE 20
+#define X_AXIS_SCALE 75
 #define Y_AXIS_SCALE 75
-#define HIGHLIGHT_INTERPOLANTS false
+#define HIGHLIGHT_INTERPOLANTS true
 
 std::ostream& logSDLError(std::ostream &os, const std::string &msg){
 	return os << msg << " error: " << SDL_GetError() << '\n';
@@ -74,6 +79,7 @@ int main(){
 	bool mouse_left_down {false};
 	int initial_x;
     int initial_y;
+    double zoom {1};
     
     Function f {Function(SAMPLE_FREQUENCY)};
     double offset_x {0};
@@ -90,10 +96,10 @@ int main(){
         bool black {true};
         
         double prev = f.next_sample()*Y_AXIS_SCALE;
-        for (double x {0}; x < WIDTH; x+=SAMPLE_FREQUENCY*X_AXIS_SCALE) {
+        for (double x {0}; x < WIDTH; x+=SAMPLE_FREQUENCY*X_AXIS_SCALE*zoom) {
             double next = f.next_sample()*Y_AXIS_SCALE;
             //The y coordinate has the default position in the middle of the screen
-            SDL_RenderDrawLine(ren, x, HEIGHT/2 + offset_y - prev , x+SAMPLE_FREQUENCY*X_AXIS_SCALE, HEIGHT/2 + offset_y - next);
+            SDL_RenderDrawLine(ren, x, HEIGHT/2 + offset_y - prev , x+SAMPLE_FREQUENCY*X_AXIS_SCALE*zoom, HEIGHT/2 + offset_y - next);
             prev = next;
             
             if (HIGHLIGHT_INTERPOLANTS) {
@@ -125,6 +131,23 @@ int main(){
                     if (event.button.button == SDL_BUTTON_LEFT)
                         mouse_left_down = false;
                     break;
+                    
+                case SDL_MOUSEWHEEL:
+                    if (event.wheel.y > 0 && zoom != MAX_ZOOM) {
+                        zoom*=ZOOMSPEED;
+                        if (zoom > MAX_ZOOM)
+                            zoom = MAX_ZOOM;
+                    }
+                    
+                    if (event.wheel.y < 0 && zoom != MIN_ZOOM) {
+                        zoom/=ZOOMSPEED;
+                        if (zoom < MIN_ZOOM)
+                            zoom = MIN_ZOOM;
+                    }
+                    if (!std::isfinite(zoom) || zoom == 0)
+                        zoom=1;
+                    break;
+                    
             }
         }
         
