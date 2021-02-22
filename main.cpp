@@ -120,7 +120,7 @@ int main(){
         for (double x {0}; x < WIDTH; x+=SAMPLE_FREQUENCY*X_AXIS_SCALE*zoom) {
             double next = f.next_sample()*Y_AXIS_SCALE;
             //The y coordinate has the default position in the middle of the screen
-            SDL_RenderDrawLine(ren, x, HEIGHT/2 + offset_y - prev , x+SAMPLE_FREQUENCY*X_AXIS_SCALE*zoom, HEIGHT/2 + offset_y - next);
+            SDL_RenderDrawLine(ren, x, /*HEIGHT/2 +*/ offset_y - prev , x+SAMPLE_FREQUENCY*X_AXIS_SCALE*zoom, /*HEIGHT/2 +*/ offset_y - next);
             prev = next;
             
             if (HIGHLIGHT_INTERPOLANTS) {
@@ -154,6 +154,22 @@ int main(){
                     break;
                     
                 case SDL_MOUSEWHEEL:
+                    
+                    int current_x;
+                    int current_y;
+                    SDL_GetMouseState(&current_x, &current_y);
+                    
+                    //current_y = HEIGHT/2 - current_y;
+                    
+                    double cx {static_cast<double>(current_x)};
+                    double cy {static_cast<double>(current_y)};
+                    
+                    cx/=X_AXIS_SCALE;
+                    //cy/=Y_AXIS_SCALE;
+                    
+                    cx/=zoom;
+                    cy/=zoom;
+                    
                     if (event.wheel.y > 0 && zoom != MAX_ZOOM) {
                         zoom*=ZOOMSPEED;
                         if (zoom > MAX_ZOOM)
@@ -167,19 +183,23 @@ int main(){
                     }
                     
                     //set offsets accordingly
-                    int current_x;
-                    int current_y;
-                    SDL_GetMouseState(&current_x, &current_y);
                     
-                    //current_y -= HEIGHT/2;
-                    double x2 {current_x/ZOOMSPEED};
-                    double y2 {current_y/ZOOMSPEED};
+                    double x2 {static_cast<double>(current_x)};
+                    double y2 {static_cast<double>(current_y)};
                     
-                    //offset_x -= (current_x-x2);
-                    //offset_y += (current_y-y2);
+                    x2/=X_AXIS_SCALE;
+                    //y2/=Y_AXIS_SCALE;
+                    
+                    x2/=zoom;
+                    y2/=zoom;
+                    
+                    
+                    offset_x += (cx-x2);
+                    offset_y += (cy-y2);
 
                     std::cout << offset_x << ' ' << offset_y << '\n';
-                    std::cout << (current_x-x2) << ' ' << (current_y-y2) << '\n';
+                    std::cout << (current_x) << ' ' << (current_y) << '\n';
+                    std::cout << cx << ' ' << cy << '\n';
 
                     
                     
