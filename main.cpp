@@ -1,5 +1,6 @@
 #include <iostream>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 #include <string>
 #include <cmath>
 
@@ -24,7 +25,11 @@
 #define SAMPLE_FREQUENCY 0.001
 #define X_AXIS_SCALE 75
 #define Y_AXIS_SCALE 75
-#define HIGHLIGHT_INTERPOLANTS true
+#define HIGHLIGHT_INTERPOLANTS false
+//Change these to alter how many numbers are marked on the axis
+#define X_AXIS_NUMBER_INTERVAL 25
+#define Y_AXIS_NUMBER_INTERVAL 25
+
 
 std::ostream& logSDLError(std::ostream &os, const std::string &msg){
 	return os << msg << " error: " << SDL_GetError() << '\n';
@@ -47,29 +52,29 @@ void crosshair_at_mousepointer(SDL_Renderer* ren, int* mouse_x = nullptr, int* m
 }
 
 int main(){
-	if(SDL_Init(SDL_INIT_EVERYTHING)){
-		logSDLError(std::cerr, "SDL_Init");
-		return 1;
-	}
+    if(SDL_Init(SDL_INIT_EVERYTHING)){
+        logSDLError(std::cerr, "SDL_Init");
+        return 1;
+    }
 
-	SDL_Window *win {SDL_CreateWindow("Lesson2", 500, 500, WIDTH, HEIGHT, SDL_WINDOW_SHOWN)};
-	if(!win){
-		logSDLError(std::cerr, "CreateWindow");
-		SDL_Quit();
-		return 1;
-	}
-	
-	SDL_Renderer *ren {SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC)};
-	if(!ren){
-		logSDLError(std::cerr, "CreateRenderer");
-		Util::cleanup(win);
-		SDL_Quit();
-		return 1;
-	}
-	
-	//mouse scrolling variables
-	bool mouse_left_down {false};
-	int initial_x;
+    SDL_Window *win {SDL_CreateWindow("Lesson2", 500, 500, WIDTH, HEIGHT, SDL_WINDOW_SHOWN)};
+    if(!win){
+        logSDLError(std::cerr, "CreateWindow");
+        SDL_Quit();
+        return 1;
+    }
+
+    SDL_Renderer *ren {SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC)};
+    if(!ren){
+        logSDLError(std::cerr, "CreateRenderer");
+        Util::cleanup(win);
+        SDL_Quit();
+        return 1;
+    }
+
+    //mouse scrolling variables
+    bool mouse_left_down {false};
+    int initial_x;
     int initial_y;
     
     //mouse zoom variables
@@ -88,10 +93,36 @@ int main(){
         SDL_SetRenderDrawColor(ren, 255, 255, 255, SDL_ALPHA_OPAQUE);
         SDL_RenderClear(ren);
         
+        
+        //Create axis
+        SDL_SetRenderDrawColor(ren, 128, 128, 128, SDL_ALPHA_OPAQUE);
+        
+        //y axis
+        if (offset_x <= 0 && offset_x >= -WIDTH) {
+            SDL_RenderDrawLine(ren, -offset_x, 0, -offset_x, HEIGHT-1);
+            int correction {static_cast<int>(offset_y)%Y_AXIS_NUMBER_INTERVAL};
+            std::cout << correction << '\n';
+            for (int y {correction}; y < HEIGHT; y+=Y_AXIS_NUMBER_INTERVAL) {
+                SDL_RenderDrawLine(ren, -offset_x-5, y, -offset_x+5, y);
+                //add text
+            }
+        }
+        
+        //x axis
+        if (offset_y >= 0 && offset_y <= HEIGHT) {
+            SDL_RenderDrawLine(ren, 0, offset_y, WIDTH, offset_y);
+            int correction {static_cast<int>(-offset_x)%X_AXIS_NUMBER_INTERVAL};
+            //std::cout << correction << '\n';
+            for (int x {correction}; x < WIDTH; x+=X_AXIS_NUMBER_INTERVAL) {
+                SDL_RenderDrawLine(ren, x, offset_y-5, x, offset_y+5);
+                //add text
+            }
+        }
+        
         SDL_SetRenderDrawColor(ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
         bool black {true};
         
-        double prev = f.next_sample()*Y_AXIS_SCALE*zoom;
+        double prev {f.next_sample()*Y_AXIS_SCALE*zoom};
         for (double x {0}; x < WIDTH; x+=SAMPLE_FREQUENCY*X_AXIS_SCALE*zoom) {
             double next = f.next_sample()*Y_AXIS_SCALE*zoom;
             //The y coordinate has the default position in the middle of the screen
@@ -192,7 +223,7 @@ int main(){
 
     Util::cleanup(ren, win);
 
-	SDL_Quit();
-	return 0;
+    SDL_Quit();
+    return 0;
 }
 
