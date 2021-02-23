@@ -6,9 +6,10 @@ Function::Function(double sample_rate): sample_rate{sample_rate} {current_sample
 double Function::next_sample() {
     //temporary with set function
     current_sample+=sample_rate;
-    return std::sin(current_sample*current_sample/2.3);
+    //return std::sin(current_sample*current_sample/2.3);
     //return current_sample*current_sample;
     //return std::sin(current_sample);
+    return 1/current_sample;
     
 }
 

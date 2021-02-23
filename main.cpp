@@ -21,7 +21,7 @@
 #define CROSSHAIR_FADE_DURATION 20u
 
 //Change these to alter the graph
-#define SAMPLE_FREQUENCY 0.005
+#define SAMPLE_FREQUENCY 0.001
 #define X_AXIS_SCALE 75
 #define Y_AXIS_SCALE 75
 #define HIGHLIGHT_INTERPOLANTS true
@@ -82,7 +82,7 @@ int main(){
     double offset_y {0};
     
     bool done {false};
-	while (!done) {
+    while (!done) {
         SDL_Event event;
 
         SDL_SetRenderDrawColor(ren, 255, 255, 255, SDL_ALPHA_OPAQUE);
