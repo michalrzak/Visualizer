@@ -72,6 +72,37 @@ int main(){
         return 1;
     }
 
+    TTF_Init();
+            
+            
+        TTF_Font* Sans = TTF_OpenFont("Hack-Regular.ttf", 24); //this opens a font style and sets a size
+        if(!Sans) {
+            printf("TTF_OpenFont: %s\n", TTF_GetError());
+            // handle error
+        }
+
+
+        SDL_Color Black = {0, 0, 0};  // this is the color in rgb format, maxing out all would give you the color white, and it will be your text's color
+
+        SDL_Surface* surfaceMessage = TTF_RenderText_Solid(Sans, "Hellos", Black); // as TTF_RenderText_Solid could only be used on SDL_Surface then you have to create the surface first
+        if(!Sans) {
+            printf("TTF_RenderText_Solid: %s\n", TTF_GetError());
+            // handle error
+        }
+        
+        SDL_Texture* Message = SDL_CreateTextureFromSurface(ren, surfaceMessage); //now you can convert it into a texture
+        if (!Message)
+            std::cout << "pain\n";
+
+        SDL_Rect Message_rect; //create a rect
+        Message_rect.x = 100;  //controls the rect's x coordinate 
+        Message_rect.y = 100; // controls the rect's y coordinte
+        Message_rect.w = 100; // controls the width of the rect
+        Message_rect.h = 100; // controls the height of the rect
+
+        //Mind you that (0,0) is on the top left of the window/screen, think a rect as the text's box, that way it would be very simple to understand
+    
+    
     //mouse scrolling variables
     bool mouse_left_down {false};
     int initial_x;
@@ -88,6 +119,7 @@ int main(){
     
     bool done {false};
     while (!done) {
+        
         SDL_Event event;
 
         SDL_SetRenderDrawColor(ren, 255, 255, 255, SDL_ALPHA_OPAQUE);
@@ -214,11 +246,21 @@ int main(){
             --fade_crosshair;
         }
         
+        SDL_RenderCopy(ren, Message, NULL, &Message_rect); //you put the renderer's name first, the Message, the crop size(you can ignore this if you don't want to dabble with cropping), and the rect which is the size and coordinate of your texture
         
         SDL_RenderPresent(ren);
                                                                                                                                                                                                                                                            
         f.set_current_sample(offset_x/X_AXIS_SCALE/zoom);
         //SDL_Delay(100);
+
+        //Now since it's a texture, you have to put RenderCopy in your game loop area, the area where the whole code executes
+
+        
+
+        //Don't forget to free your surface and texture
+        //SDL_FreeSurface(surfaceMessage);
+        //SDL_DestroyTexture(Message);
+
     }
 
     Util::cleanup(ren, win);
