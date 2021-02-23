@@ -3,6 +3,8 @@
 #include <SDL2/SDL_ttf.h>
 #include <string>
 #include <cmath>
+#include <vector>
+#include <iomanip>
 
 #include "cleanup.h"
 #include "Function.h"
@@ -16,7 +18,7 @@
 #define Y_SCROLLSPEED -2.0
 
 //Change these number to change the zoom parameters
-#define ZOOMSPEED 1.5
+#define ZOOMSPEED 1.2
 #define MIN_ZOOM 0.001
 #define MAX_ZOOM 1000
 #define CROSSHAIR_FADE_DURATION 20u
@@ -25,14 +27,22 @@
 #define SAMPLE_FREQUENCY 0.001
 #define X_AXIS_SCALE 75
 #define Y_AXIS_SCALE 75
-#define HIGHLIGHT_INTERPOLANTS false
+#define HIGHLIGHT_INTERPOLANTS true
 //Change these to alter how many numbers are marked on the axis
-#define X_AXIS_NUMBER_INTERVAL 25
-#define Y_AXIS_NUMBER_INTERVAL 25
+#define X_AXIS_NUMBER_INTERVAL 50
+#define Y_AXIS_NUMBER_INTERVAL 50
+//Whenever a marked interval is larger then this it will be split in two
+//Same way, when an interval becomes less then half of this it will be merged
+#define AXIS_MAX_INTERVAL_SIZE 75
+//Font size on numbers on axis
+#define AXIS_FONT_SIZE 10
 
 
 std::ostream& logSDLError(std::ostream &os, const std::string &msg){
-	return os << msg << " error: " << SDL_GetError() << '\n';
+    return os << msg << " error: " << SDL_GetError() << '\n';
+}
+std::ostream& logTTFError(std::ostream &os, const std::string &msg){
+    return os << msg << " error: " << TTF_GetError() << '\n';
 } 
 
 
@@ -72,35 +82,17 @@ int main(){
         return 1;
     }
 
+    
+    //Font initialization
     TTF_Init();
-            
-            
-        TTF_Font* Sans = TTF_OpenFont("Hack-Regular.ttf", 24); //this opens a font style and sets a size
-        if(!Sans) {
-            printf("TTF_OpenFont: %s\n", TTF_GetError());
-            // handle error
-        }
-
-
-        SDL_Color Black = {0, 0, 0};  // this is the color in rgb format, maxing out all would give you the color white, and it will be your text's color
-
-        SDL_Surface* surfaceMessage = TTF_RenderText_Solid(Sans, "Hellos", Black); // as TTF_RenderText_Solid could only be used on SDL_Surface then you have to create the surface first
-        if(!Sans) {
-            printf("TTF_RenderText_Solid: %s\n", TTF_GetError());
-            // handle error
-        }
-        
-        SDL_Texture* Message = SDL_CreateTextureFromSurface(ren, surfaceMessage); //now you can convert it into a texture
-        if (!Message)
-            std::cout << "pain\n";
-
-        SDL_Rect Message_rect; //create a rect
-        Message_rect.x = 100;  //controls the rect's x coordinate 
-        Message_rect.y = 100; // controls the rect's y coordinte
-        Message_rect.w = 100; // controls the width of the rect
-        Message_rect.h = 100; // controls the height of the rect
-
-        //Mind you that (0,0) is on the top left of the window/screen, think a rect as the text's box, that way it would be very simple to understand
+    
+    TTF_Font* font = TTF_OpenFont("Hack-Regular.ttf", AXIS_FONT_SIZE);
+    if(!font) {
+        logTTFError(std::cerr, "OpenFont");
+        Util::cleanup(ren, win);
+        SDL_Quit();
+        return 1;
+    }
     
     
     //mouse scrolling variables
@@ -129,25 +121,135 @@ int main(){
         //Create axis
         SDL_SetRenderDrawColor(ren, 128, 128, 128, SDL_ALPHA_OPAQUE);
         
+        std::vector<SDL_Surface*> message_surfaces;
+        std::vector<SDL_Texture*> messages;
+        
         //y axis
         if (offset_x <= 0 && offset_x >= -WIDTH) {
             SDL_RenderDrawLine(ren, -offset_x, 0, -offset_x, HEIGHT-1);
-            int correction {static_cast<int>(offset_y)%Y_AXIS_NUMBER_INTERVAL};
-            std::cout << correction << '\n';
-            for (int y {correction}; y < HEIGHT; y+=Y_AXIS_NUMBER_INTERVAL) {
+            
+            double divide;
+            if (zoom > 1)
+                divide = std::ceil(zoom/2);
+            else
+                divide = 1/std::ceil(1/zoom/2);
+            
+            
+            int step {static_cast<int>(Y_AXIS_SCALE*zoom/divide)};
+            int correction {static_cast<int>(offset_y)%step};
+            
+            
+            for (int y {correction}; y < HEIGHT; y+=step) {
+                
                 SDL_RenderDrawLine(ren, -offset_x-5, y, -offset_x+5, y);
-                //add text
+                
+                std::string num {std::to_string((offset_y-y)/Y_AXIS_SCALE/zoom)};
+                num.resize(num.find('.') + 3); //+1 for the dot it self + 2 for two decimal places
+                
+                message_surfaces.push_back(TTF_RenderText_Solid(font, num.c_str(), {200, 125, 0}));
+                if(!message_surfaces.back()) {
+                    logTTFError(std::cerr, "TTF_RenderText_Solid");
+                    
+                    message_surfaces.pop_back(); //remove the last, invalid element
+                    for (auto ele : message_surfaces)
+                        Util::cleanup(ele);
+                    Util::cleanup(ren, win);
+                    
+                    SDL_Quit();
+                    return 1;
+                }
+                
+                messages.push_back(SDL_CreateTextureFromSurface(ren, message_surfaces.back()));
+                if (!messages.back()) {
+                    logTTFError(std::cerr, "TTF_RenderText_Solid");
+                    
+                    messages.pop_back(); //remove the last, invalid element
+                    for (auto ele : messages)
+                        Util::cleanup(ele);
+                    
+                    for (auto ele : message_surfaces)
+                        Util::cleanup(ele);
+                    
+                    Util::cleanup(ren, win);
+                    
+                    SDL_Quit();
+                    return 1;
+                }
+
+                SDL_Rect message_rect; //create a rect
+                message_rect.x = -offset_x+6;  //controls the rect's x coordinate 
+                message_rect.y = y; // controls the rect's y coordinte
+                message_rect.w = num.size()*AXIS_FONT_SIZE; // controls the width of the rect
+                message_rect.h = 15; // controls the height of the rect
+                
+                SDL_RenderCopy(ren, messages.back(), NULL, &message_rect);
             }
         }
         
         //x axis
         if (offset_y >= 0 && offset_y <= HEIGHT) {
+            
             SDL_RenderDrawLine(ren, 0, offset_y, WIDTH, offset_y);
-            int correction {static_cast<int>(-offset_x)%X_AXIS_NUMBER_INTERVAL};
-            //std::cout << correction << '\n';
-            for (int x {correction}; x < WIDTH; x+=X_AXIS_NUMBER_INTERVAL) {
+            
+            double divide;
+            if (zoom > 1)
+                divide = std::ceil(zoom/2);
+            else
+                divide = 1/std::ceil(1/zoom/2);
+            
+            
+            int step {static_cast<int>(X_AXIS_SCALE*zoom/divide)};
+            int correction {static_cast<int>(-offset_x)%step};
+
+            
+            std::cout << correction << ' ' << step << '\n';
+            for (int x {correction}; x < WIDTH; x+=step) {
                 SDL_RenderDrawLine(ren, x, offset_y-5, x, offset_y+5);
                 //add text
+                
+                std::string num {std::to_string((x+offset_x)/X_AXIS_SCALE/zoom)};
+                std::cout << num.find('.') << '\n';
+                std::cout << num.size() << '\n';
+                num.resize(num.find('.') + 3); //+1 for the dot it self + 2 for two decimal places
+                
+                
+                message_surfaces.push_back(TTF_RenderText_Solid(font, num.c_str(), {200, 125, 0}));
+                if(!message_surfaces.back()) {
+                    logTTFError(std::cerr, "TTF_RenderText_Solid");
+                    
+                    message_surfaces.pop_back(); //remove the last, invalid element
+                    for (auto ele : message_surfaces)
+                        Util::cleanup(ele);
+                    Util::cleanup(ren, win);
+                    
+                    SDL_Quit();
+                    return 1;
+                }
+                
+                messages.push_back(SDL_CreateTextureFromSurface(ren, message_surfaces.back()));
+                if (!messages.back()) {
+                    logTTFError(std::cerr, "TTF_RenderText_Solid");
+                    
+                    messages.pop_back(); //remove the last, invalid element
+                    for (auto ele : messages)
+                        Util::cleanup(ele);
+                    
+                    for (auto ele : message_surfaces)
+                        Util::cleanup(ele);
+                    
+                    Util::cleanup(ren, win);
+                    
+                    SDL_Quit();
+                    return 1;
+                }
+
+                SDL_Rect message_rect; //create a rect
+                message_rect.x = x-num.size()*AXIS_FONT_SIZE/2;  //controls the rect's x coordinate 
+                message_rect.y = offset_y+6; // controls the rect's y coordinte
+                message_rect.w = num.size()*AXIS_FONT_SIZE; // controls the width of the rect
+                message_rect.h = 15; // controls the height of the rect
+                
+                SDL_RenderCopy(ren, messages.back(), NULL, &message_rect);
             }
         }
         
@@ -246,20 +348,16 @@ int main(){
             --fade_crosshair;
         }
         
-        SDL_RenderCopy(ren, Message, NULL, &Message_rect); //you put the renderer's name first, the Message, the crop size(you can ignore this if you don't want to dabble with cropping), and the rect which is the size and coordinate of your texture
         
         SDL_RenderPresent(ren);
                                                                                                                                                                                                                                                            
         f.set_current_sample(offset_x/X_AXIS_SCALE/zoom);
-        //SDL_Delay(100);
-
-        //Now since it's a texture, you have to put RenderCopy in your game loop area, the area where the whole code executes
-
         
-
-        //Don't forget to free your surface and texture
-        //SDL_FreeSurface(surfaceMessage);
-        //SDL_DestroyTexture(Message);
+        for (auto ele : messages)
+            Util::cleanup(ele);
+        
+        for (auto ele : message_surfaces)
+            Util::cleanup(ele);
 
     }
 
