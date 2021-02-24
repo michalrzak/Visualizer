@@ -18,7 +18,7 @@
 #define Y_SCROLLSPEED -2.0
 
 //Change these number to change the zoom parameters
-#define ZOOMSPEED 1.2 //this number should be kept above 1, otherwise zooming will be reversed
+#define ZOOMSPEED 1.25 //this number should be kept above 1, otherwise zooming will be reversed
 #define MIN_ZOOM 0.1
 #define MAX_ZOOM 30
 #define CROSSHAIR_FADE_DURATION 20u
@@ -132,16 +132,18 @@ int main(){
         if (offset_x <= 0 && offset_x >= -WIDTH) {
             SDL_RenderDrawLine(ren, -offset_x, 0, -offset_x, HEIGHT-1);
             
+            double y_num {std::ceil(static_cast<double>(-offset_y)/Y_AXIS_SCALE*divide/zoom)};
             
             int step {static_cast<int>(Y_AXIS_SCALE*zoom/divide)};
             int correction {offset_y%step};
             
             
-            for (int y {correction}; y < HEIGHT; y+=step) {
+            for (int y {correction}; y < HEIGHT; y+=step, ++y_num) {
                 
                 SDL_RenderDrawLine(ren, -offset_x-5, y, -offset_x+5, y);
                 
-                std::string num {std::to_string((offset_y-y)/Y_AXIS_SCALE/zoom)};
+                //std::string num {std::to_string((offset_y-y)/Y_AXIS_SCALE/zoom)};
+                std::string num {std::to_string(-y_num/divide)};
                 num.resize(num.find('.') + 3); //+1 for the dot it self + 2 for two decimal places
                 
                 message_surfaces.push_back(TTF_RenderText_Solid(font, num.c_str(), {200, 125, 0}));
@@ -189,28 +191,25 @@ int main(){
             
             SDL_RenderDrawLine(ren, 0, offset_y, WIDTH, offset_y);
             
-            double x_num {std::ceil(static_cast<double>(offset_x)/X_AXIS_SCALE/zoom)};
+            double x_num {std::ceil(static_cast<double>(offset_x)/X_AXIS_SCALE*divide/zoom)};
             
             int step {static_cast<int>(X_AXIS_SCALE*zoom/divide)};
-            int correction {-offset_x%step};
+            int correction {-offset_x%step}; //correction
             
-            //std::cout << x_num << ' ' << divide << '\n';
+            //std::cout << x_num << ' ' << offset_x/zoom/X_AXIS_SCALE*divide << ' ' << divide << ' ' << correction << '\n';
             
             
-            for (int x {correction}; x < WIDTH; x+=step) {
+            for (int x {correction}; x < WIDTH; x+=step, ++x_num) {
                 SDL_RenderDrawLine(ren, x, offset_y-5, x, offset_y+5);
                 
                 //dont show 0 on the x axis
-                if (std::abs((x+offset_x)/X_AXIS_SCALE/zoom) < 0.01) {
-                    x_num += 1/divide;
+                if (std::abs((x+offset_x)/X_AXIS_SCALE/zoom) < 0.01)
                     continue;
-                }
+
                 
-                //std::string num {std::to_string((x+offset_x)/X_AXIS_SCALE/zoom)};
-                std::string num {std::to_string(x_num)};
+                std::string num {std::to_string(x_num/divide)};
                 num.resize(num.find('.') + 3); //+1 for the dot it self + 2 for two decimal places
                 
-                x_num += 1/divide;
                 
                 message_surfaces.push_back(TTF_RenderText_Solid(font, num.c_str(), {200, 125, 0}));
                 if(!message_surfaces.back()) {
@@ -324,8 +323,6 @@ int main(){
                     }
                     
                     fade_crosshair = CROSSHAIR_FADE_DURATION;
-                                        
-                    std::cout << zoom << '\n';
                                     
                     break;
                     
