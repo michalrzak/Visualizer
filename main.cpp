@@ -106,8 +106,8 @@ int main(){
     
     //Function variables
     Function f {Function(SAMPLE_FREQUENCY)};
-    double offset_x {0};
-    double offset_y {0};
+    int offset_x {0};
+    int offset_y {0};
     
     bool done {false};
     while (!done) {
@@ -124,19 +124,19 @@ int main(){
         std::vector<SDL_Surface*> message_surfaces;
         std::vector<SDL_Texture*> messages;
         
+        double divide;
+        if (zoom > 1)
+            divide = std::ceil(zoom/2);
+        else
+            divide = 1/std::ceil(1/zoom/2);
+        
         //y axis
         if (offset_x <= 0 && offset_x >= -WIDTH) {
             SDL_RenderDrawLine(ren, -offset_x, 0, -offset_x, HEIGHT-1);
             
-            double divide;
-            if (zoom > 1)
-                divide = std::ceil(zoom/2);
-            else
-                divide = 1/std::ceil(1/zoom/2);
-            
             
             int step {static_cast<int>(Y_AXIS_SCALE*zoom/divide)};
-            int correction {static_cast<int>(offset_y)%step};
+            int correction {offset_y%step};
             
             
             for (int y {correction}; y < HEIGHT; y+=step) {
@@ -191,23 +191,28 @@ int main(){
             
             SDL_RenderDrawLine(ren, 0, offset_y, WIDTH, offset_y);
             
-            double divide;
-            if (zoom > 1)
-                divide = std::ceil(zoom/2);
-            else
-                divide = 1/std::ceil(1/zoom/2);
-            
+            double x_num {std::ceil(static_cast<double>(offset_x)/X_AXIS_SCALE/zoom)};
             
             int step {static_cast<int>(X_AXIS_SCALE*zoom/divide)};
-            int correction {static_cast<int>(-offset_x)%step};
+            int correction {-offset_x%step};
+            
+            std::cout << x_num << ' ' << divide << '\n';
+            
             
             for (int x {correction}; x < WIDTH; x+=step) {
                 SDL_RenderDrawLine(ren, x, offset_y-5, x, offset_y+5);
-                //add text
                 
-                std::string num {std::to_string((x+offset_x)/X_AXIS_SCALE/zoom)};
+                //dont show 0 on the x axis
+                if (std::abs((x+offset_x)/X_AXIS_SCALE/zoom) < 0.01) {
+                    x_num += 1/divide;
+                    continue;
+                }
+                
+                //std::string num {std::to_string((x+offset_x)/X_AXIS_SCALE/zoom)};
+                std::string num {std::to_string(x_num)};
                 num.resize(num.find('.') + 3); //+1 for the dot it self + 2 for two decimal places
                 
+                x_num += 1/divide;
                 
                 message_surfaces.push_back(TTF_RenderText_Solid(font, num.c_str(), {200, 125, 0}));
                 if(!message_surfaces.back()) {
@@ -350,7 +355,7 @@ int main(){
         
         SDL_RenderPresent(ren);
                                                                                                                                                                                                                                                            
-        f.set_current_sample(offset_x/X_AXIS_SCALE/zoom);
+        f.set_current_sample(static_cast<double>(offset_x)/X_AXIS_SCALE/zoom);
         
         for (auto ele : messages)
             Util::cleanup(ele);
