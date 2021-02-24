@@ -57,7 +57,7 @@ void crosshair_at_mousepointer(SDL_Renderer* ren, int* mouse_x = nullptr, int* m
     
     if (mouse_x != nullptr)
         *mouse_x = current_x;
-    if (mouse_y != nullptr)
+    if (mouse_y != nullptr) 
         *mouse_y = current_y;
 }
 
