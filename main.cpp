@@ -18,9 +18,9 @@
 #define Y_SCROLLSPEED -2.0
 
 //Change these number to change the zoom parameters
-#define ZOOMSPEED 1.2
-#define MIN_ZOOM 0.001
-#define MAX_ZOOM 1000
+#define ZOOMSPEED 1.2 //this number should be kept above 1, otherwise zooming will be reversed
+#define MIN_ZOOM 0.1
+#define MAX_ZOOM 30
 #define CROSSHAIR_FADE_DURATION 20u
 
 //Change these to alter the graph
@@ -196,7 +196,7 @@ int main(){
             int step {static_cast<int>(X_AXIS_SCALE*zoom/divide)};
             int correction {-offset_x%step};
             
-            std::cout << x_num << ' ' << divide << '\n';
+            //std::cout << x_num << ' ' << divide << '\n';
             
             
             for (int x {correction}; x < WIDTH; x+=step) {
@@ -327,6 +327,8 @@ int main(){
                     
                     fade_crosshair = CROSSHAIR_FADE_DURATION;
                                         
+                    std::cout << zoom << '\n';
+                                    
                     break;
                     
             }
