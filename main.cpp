@@ -124,11 +124,9 @@ int main(){
         std::vector<SDL_Surface*> message_surfaces;
         std::vector<SDL_Texture*> messages;
         
-        double divide;
-        if (zoom > 1)
-            divide = std::ceil(zoom/2);
-        else
-            divide = 1/std::ceil(1/zoom/2);
+        
+        double log {std::log2(zoom)}; //maybe change the log2 here to some other base to alter when a split occurs
+        double divide {std::pow(2, std::floor(log))};
         
         //y axis
         if (offset_x <= 0 && offset_x >= -WIDTH) {
