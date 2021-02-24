@@ -200,16 +200,12 @@ int main(){
             
             int step {static_cast<int>(X_AXIS_SCALE*zoom/divide)};
             int correction {static_cast<int>(-offset_x)%step};
-
             
-            std::cout << correction << ' ' << step << '\n';
             for (int x {correction}; x < WIDTH; x+=step) {
                 SDL_RenderDrawLine(ren, x, offset_y-5, x, offset_y+5);
                 //add text
                 
                 std::string num {std::to_string((x+offset_x)/X_AXIS_SCALE/zoom)};
-                std::cout << num.find('.') << '\n';
-                std::cout << num.size() << '\n';
                 num.resize(num.find('.') + 3); //+1 for the dot it self + 2 for two decimal places
                 
                 
@@ -259,17 +255,20 @@ int main(){
         double prev {f.next_sample()*Y_AXIS_SCALE*zoom};
         for (double x {0}; x < WIDTH; x+=SAMPLE_FREQUENCY*X_AXIS_SCALE*zoom) {
             double next = f.next_sample()*Y_AXIS_SCALE*zoom;
-            //The y coordinate has the default position in the middle of the screen
-            SDL_RenderDrawLine(ren, x, /*HEIGHT/2 +*/ offset_y - prev , x+SAMPLE_FREQUENCY*X_AXIS_SCALE*zoom, /*HEIGHT/2 +*/ offset_y - next);
-            prev = next;
             
-            if (HIGHLIGHT_INTERPOLANTS) {
-                if (black)
-                    SDL_SetRenderDrawColor(ren, 255, 0, 0, SDL_ALPHA_OPAQUE);
-                else
-                    SDL_SetRenderDrawColor(ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
-                black = !black;
+            //Check if the drawn line would be visible on screen
+            if ( ((offset_y - prev) >= 0 && (offset_y-prev) <= HEIGHT) || ( (offset_y - next) >= 0 && (offset_y - next) <= HEIGHT) ) {
+                SDL_RenderDrawLine(ren, x, offset_y - prev , x+SAMPLE_FREQUENCY*X_AXIS_SCALE*zoom, offset_y - next);
+                
+                if (HIGHLIGHT_INTERPOLANTS) {
+                    if (black)
+                        SDL_SetRenderDrawColor(ren, 255, 0, 0, SDL_ALPHA_OPAQUE);
+                    else
+                        SDL_SetRenderDrawColor(ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
+                    black = !black;
+                }
             }
+            prev = next;
         }
         
         

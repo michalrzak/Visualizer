@@ -1,5 +1,6 @@
 #include "Function.h"
 #include <cmath>
+#include <iostream>
 
 Function::Function(double sample_rate): sample_rate{sample_rate} {current_sample = 0;}
 
@@ -10,6 +11,8 @@ double Function::next_sample() {
     //return current_sample*current_sample;
     //return std::sin(current_sample);
     //return 1/current_sample;
+    if (!std::tan(current_sample))
+        std::cout << "I was 0\n";
     return std::tan(current_sample);
 }
 
