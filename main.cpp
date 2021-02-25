@@ -37,6 +37,9 @@
 //Font size on numbers on axis
 #define AXIS_FONT_SIZE 10
 
+//highlight with right click
+#define HIGHLIGHT_FONT_SIZE 10
+
 
 std::ostream& logSDLError(std::ostream &os, const std::string &msg){
     return os << msg << " error: " << SDL_GetError() << '\n';
@@ -94,6 +97,14 @@ int main(){
         return 1;
     }
     
+    
+    //point highlight
+    bool point_highlight {false};
+    double highlight_x;
+    double highlight_y;
+    SDL_Surface* highlight_surface;
+    SDL_Texture* highlight_text;
+    int highlight_width;
     
     //mouse scrolling variables
     bool mouse_left_down {false};
@@ -286,12 +297,75 @@ int main(){
                         initial_x = event.button.x;
                         initial_y = event.button.y;
                     }
-                    
                     break;
                 
                 case SDL_MOUSEBUTTONUP:
                     if (event.button.button == SDL_BUTTON_LEFT)
                         mouse_left_down = false;
+                    
+                    if (event.button.button == SDL_BUTTON_RIGHT) {
+                        if (point_highlight)
+                            Util::cleanup(highlight_text, highlight_surface);
+                            
+                        double new_highlight_x = (offset_x + event.button.x)/zoom/X_AXIS_SCALE;
+                        double new_highlight_y = -(offset_y - event.button.y)/zoom/Y_AXIS_SCALE;
+                        
+                        //if you double click on the same point the view gets reset
+                        if (new_highlight_x == highlight_x && new_highlight_y == highlight_y && point_highlight == true) { 
+                            point_highlight = false;
+                            continue;
+                        }
+                        
+                        point_highlight = true; //show the highlighted point
+                        
+                        highlight_x = new_highlight_x;
+                        highlight_y = new_highlight_y;
+                        
+                        std::string num {std::to_string(highlight_x)};
+                        num.resize(num.find('.') + 3); //+1 for the dot it self + 2 for two decimal places
+                        
+                        std::string showing {"[" + num + ";"};
+                        
+                        num = std::to_string(highlight_y);
+                        num.resize(num.find('.') + 3);
+                        
+                        showing += num + "]";
+                        
+                        highlight_width = showing.size();
+                        
+                        highlight_surface = TTF_RenderText_Solid(font, showing.c_str(), {255, 0, 0});
+                        if(!highlight_surface) {
+                            logTTFError(std::cerr, "TTF_RenderText_Solid");
+                            
+                            for (auto ele : messages)
+                                Util::cleanup(ele);
+                            
+                            for (auto ele : message_surfaces)
+                                Util::cleanup(ele);
+                            
+                            Util::cleanup(ren, win);
+                            
+                            SDL_Quit();
+                            return 1;
+                        }
+                        
+                        highlight_text = SDL_CreateTextureFromSurface(ren, highlight_surface);
+                        if (!highlight_text) {
+                            logTTFError(std::cerr, "TTF_RenderText_Solid");
+                            
+                            for (auto ele : messages)
+                                Util::cleanup(ele);
+                            
+                            for (auto ele : message_surfaces)
+                                Util::cleanup(ele);
+                            
+                            Util::cleanup(highlight_surface, ren, win);
+                            
+                            SDL_Quit();
+                            return 1;
+                        }
+                    }
+                    
                     break;
                     
                 case SDL_MOUSEWHEEL:
@@ -342,6 +416,27 @@ int main(){
             initial_x = current_x;
             initial_y = current_y;
         }
+        
+        if (point_highlight) {
+            //maybe add check to only draw the point if it is on screen
+            
+            SDL_SetRenderDrawColor(ren, 255, 0, 0, SDL_ALPHA_OPAQUE);
+            
+            int cor_x {static_cast<int>(highlight_x*zoom*X_AXIS_SCALE-offset_x)};
+            int cor_y {static_cast<int>(highlight_y*zoom*Y_AXIS_SCALE+offset_y)};
+            SDL_RenderDrawLine (ren, cor_x-10, cor_y-10, cor_x+10, cor_y+10);
+            SDL_RenderDrawLine (ren, cor_x+10, cor_y-10, cor_x-10, cor_y+10);
+            
+            SDL_Rect rect;
+            rect.x = cor_x+11;
+            rect.y = cor_y;
+            rect.w = highlight_width*HIGHLIGHT_FONT_SIZE;
+            rect.h = HIGHLIGHT_FONT_SIZE*1.5;
+            
+            SDL_RenderCopy(ren, highlight_text, NULL, &rect);
+
+        }
+        
         
         if (fade_crosshair) {
             SDL_SetRenderDrawColor(ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
