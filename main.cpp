@@ -176,11 +176,11 @@ int main(){
                     return 1;
                 }
 
-                SDL_Rect message_rect; //create a rect
-                message_rect.x = -offset_x+6;  //controls the rect's x coordinate 
-                message_rect.y = y; // controls the rect's y coordinte
-                message_rect.w = num.size()*AXIS_FONT_SIZE; // controls the width of the rect
-                message_rect.h = 15; // controls the height of the rect
+                SDL_Rect message_rect;
+                message_rect.x = -offset_x+6;
+                message_rect.y = y;
+                message_rect.w = num.size()*AXIS_FONT_SIZE;
+                message_rect.h = AXIS_FONT_SIZE*1.5;
                 
                 SDL_RenderCopy(ren, messages.back(), NULL, &message_rect);
             }
@@ -241,11 +241,11 @@ int main(){
                     return 1;
                 }
 
-                SDL_Rect message_rect; //create a rect
-                message_rect.x = x-num.size()*AXIS_FONT_SIZE/2;  //controls the rect's x coordinate 
-                message_rect.y = offset_y+6; // controls the rect's y coordinte
-                message_rect.w = num.size()*AXIS_FONT_SIZE; // controls the width of the rect
-                message_rect.h = 15; // controls the height of the rect
+                SDL_Rect message_rect;
+                message_rect.x = x-num.size()*AXIS_FONT_SIZE/2;
+                message_rect.y = offset_y+6;
+                message_rect.w = num.size()*AXIS_FONT_SIZE;
+                message_rect.h = AXIS_FONT_SIZE*1.5;
                 
                 SDL_RenderCopy(ren, messages.back(), NULL, &message_rect);
             }
