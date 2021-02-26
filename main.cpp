@@ -27,7 +27,7 @@
 #define SAMPLE_FREQUENCY 0.001
 #define X_AXIS_SCALE 75
 #define Y_AXIS_SCALE 75
-#define HIGHLIGHT_INTERPOLANTS true
+#define HIGHLIGHT_INTERPOLANTS false
 //Change these to alter how many numbers are marked on the axis
 #define X_AXIS_NUMBER_INTERVAL 50
 #define Y_AXIS_NUMBER_INTERVAL 50
