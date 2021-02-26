@@ -70,7 +70,7 @@ int main(){
         return 1;
     }
 
-    SDL_Window *win {SDL_CreateWindow("Lesson2", 500, 500, WIDTH, HEIGHT, SDL_WINDOW_SHOWN)};
+    SDL_Window *win {SDL_CreateWindow("Visualizer", 500, 500, WIDTH, HEIGHT, SDL_WINDOW_SHOWN)};
     if(!win){
         logSDLError(std::cerr, "CreateWindow");
         SDL_Quit();
