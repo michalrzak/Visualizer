@@ -326,7 +326,7 @@ int main(){
                         
                         std::string showing {"[" + num + ";"};
                         
-                        num = std::to_string(highlight_y);
+                        num = std::to_string(-highlight_y);
                         num.resize(num.find('.') + 3);
                         
                         showing += num + "]";
