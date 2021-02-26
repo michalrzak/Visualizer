@@ -6,12 +6,13 @@
 //TODO: Rename this
 class Function {
     
-    std::string function; //funcito; unused for now
+    std::string function; //function; unused for now
     double sample_rate;
     double current_sample;
     
 public:
     Function(double sample_rate);
+    //Function(double sample_rate, std::string function);
     
     double next_sample();
     
